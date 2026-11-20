@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$GEMINI_PROJECT_DIR/.ctx/ctx.py\" load --slim --hook gemini"
+          }
+        ]
+      }
+    ],
+    "BeforeAgent": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$GEMINI_PROJECT_DIR/.ctx/ctx.py\" recall --hook gemini"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$GEMINI_PROJECT_DIR/.ctx/ctx.py\" autosave --hook gemini"
+          }
+        ]
+      }
+    ]
+  }
+}

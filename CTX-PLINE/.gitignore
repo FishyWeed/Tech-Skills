@@ -1,0 +1,8 @@
+# Private: the maintainer's publishing notes. Never public.
+/PUBLISHING.md
+__pycache__/
+*.pyc
+.ctx/
+.context/
+.agents/context/
+.claude/context/
