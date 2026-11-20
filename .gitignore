@@ -1,0 +1,6 @@
+# This folder is the Tech-Skills repository. Only the paths listed below are public; everything else stays private.
+# To publish a skill, add a line "!/<folder>/" and a row in .github/README.md.
+/*
+!/.gitignore
+!/.github/
+!/DocPC/

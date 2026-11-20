@@ -1,0 +1,7 @@
+{
+  "_help": "Content of xlsx-fill.ps1. Cells are 'Sheet name!B3' or 'B3' (first sheet). Remove signature if the user does not allow it.",
+  "template": "../Inputs/workload-matrix.xlsx",
+  "output": "WORKLOAD-MATRIX",
+  "cells": { "B3": "Full name of the student" },
+  "signature": { "image": "", "cell": "D21" }
+}

@@ -1,0 +1,20 @@
+{
+  "_help": "Content of minutes.js. One page per item in pages, in this order. The first member is the chair, the minute taker and the default person for actions and tasks.",
+  "project": "Team name / Project name",
+  "members": ["Full name of the student"],
+  "output": "MINUTES-AND-PROGRESS-REPORT",
+  "pages": [
+    {
+      "type": "minutes", "n": 1, "week": 1, "weekDate": "Sunday 3 January 2027",
+      "date": "3 January 2027", "start": "8:00 pm", "end": "10:00 pm", "place": "Discord",
+      "objectives": ["To agree the scope of the project."],
+      "topics": [["Project Scope", ["A decision that the meeting made.", "An issue that the meeting found."]]],
+      "actions": [["Write the introduction", "10 Jan 2027"]],
+      "next": { "date": "10 Jan 2027", "where": "8:00 pm, Discord", "objective": "To review the introduction." }
+    },
+    {
+      "type": "progress", "n": 1, "week": 1, "weekDate": "Sunday 3 January 2027",
+      "rows": [["1.0 Introduction", "4 Jan 2027", "10 Jan 2027", "High", "In progress"]]
+    }
+  ]
+}

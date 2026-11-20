@@ -1,0 +1,22 @@
+{
+  "_help": "Settings of this document. body.js and assemble.ps1 read them. Keys that start with _ are notes.",
+  "title": "Title of the document",
+  "author": "Full name of the student",
+  "header": "Module code and module name",
+  "footer": ["Programme", "University", "Intake code"],
+  "font": "Times New Roman",
+  "fontSize": 12,
+  "lineSpacing": 1.5,
+  "output": "DOCUMENT-NAME",
+  "_output": "assemble.ps1 writes ../Outputs/<output>.docx and .pdf.",
+  "template": "../Inputs/lecturer-template.docx",
+  "_template": "The lecturer's template that holds the cover. Use \"\" if the document has no cover from a template.",
+  "coverEnd": "Table of Contents",
+  "_coverEnd": "The text of the first paragraph of the template after the cover. Everything before it is the cover.",
+  "coverAfter": { "Project Title:": " Title of the document", "Intake:": " Intake code" },
+  "_coverAfter": "Inside the cover: put the value right after the label text.",
+  "coverReplace": { "MR/MISS": "MR" },
+  "_coverReplace": "Inside the cover: replace the text with the value (at most 255 characters).",
+  "coverTables": [ { "find": "STUDENT ID", "row": 2, "values": ["MR", "FULL NAME", "ID000000", "GROUP LEADER", null] } ],
+  "_coverTables": "Inside the cover: the first table that holds the text 'find' gets the values in row 'row', from the first column. null keeps a cell."
+}

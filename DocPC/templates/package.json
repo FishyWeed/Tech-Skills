@@ -1,0 +1,9 @@
+{
+  "name": "docpc-source",
+  "private": true,
+  "description": "Build scripts of one document. Made by the DocPC skill.",
+  "type": "commonjs",
+  "dependencies": {
+    "docx": "^9.5.1"
+  }
+}

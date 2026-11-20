@@ -1,0 +1,5 @@
+# Each user's own setup and assets (signature, logo, templates). SETUP.md makes this folder.
+local/
+# Development notes of the maintainer. They are not part of the public skill.
+dev/
+node_modules/

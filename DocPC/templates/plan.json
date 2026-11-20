@@ -1,0 +1,5 @@
+[
+  {"id": "WBS-1.0", "name": "First phase", "group": true},
+  {"id": "WBS-1.1", "name": "Full name of the first task", "g": "1.1 Short Gantt label", "s": "2027-01-04", "e": "2027-01-08", "status": "Planned"},
+  {"id": "WBS-1.2", "name": "Full name of the second task", "g": "1.2 Short Gantt label", "s": "2027-01-09", "e": "2027-01-15", "status": "Done"}
+]

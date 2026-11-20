@@ -1,0 +1,47 @@
+{
+  "_note": "Example only. Replace it with the document's own design. By default draw only the context diagram, DFD Level 0 and the ERD; add Level 1 or Level 2 DFDs (type dfd, for example dfd1_2) only when the user asks.",
+  "context": {
+    "type": "context",
+    "system": "System\nName",
+    "entities": ["USER", "MANAGER", "ADMINISTRATOR"],
+    "flows": [
+      ["USER", "0", "login details,\nrequest", "request status,\nmessage"],
+      ["MANAGER", "0", "decision", "pending\nrequests"],
+      ["ADMINISTRATOR", "0", "user details,\nreport request", "report,\nmessage"]
+    ]
+  },
+  "dfd0": {
+    "type": "dfd",
+    "left": ["USER", "MANAGER"],
+    "processes": [
+      ["1.0", "Log In"],
+      ["2.0", "Submit\nRequest"],
+      ["3.0", "Review\nRequest"],
+      ["4.0", "Manage\nUsers"]
+    ],
+    "stores": ["USER_T", "REQUEST_T"],
+    "right": ["ADMINISTRATOR"],
+    "flows": [
+      ["USER", "1.0", "login details", "message"],
+      ["1.0", "USER_T", "email", "user record"],
+      ["USER", "2.0", "request", "request status"],
+      ["2.0", "REQUEST_T", "new request"],
+      ["MANAGER", "3.0", "decision", "pending requests"],
+      ["3.0", "REQUEST_T", "decision", "requests"],
+      ["ADMINISTRATOR", "4.0", "user details", "message"],
+      ["4.0", "USER_T", "user record"]
+    ]
+  },
+  "erd": {
+    "type": "erd",
+    "entities": [
+      ["DEPARTMENT_T", 0, 0, ["PK dep_id", "dep_name"]],
+      ["USER_T", 1, 0, ["PK usr_id", "FK dep_id", "usr_name", "usr_email", "usr_role"]],
+      ["REQUEST_T", 2, 0, ["PK req_id", "FK usr_id", "req_purpose", "req_status", "req_date"]]
+    ],
+    "relations": [
+      ["DEPARTMENT_T", "has", "USER_T", "1", "0..*"],
+      ["USER_T", "submits", "REQUEST_T", "1", "0..*"]
+    ]
+  }
+}
