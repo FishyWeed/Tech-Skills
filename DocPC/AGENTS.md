@@ -1,6 +1,6 @@
 # DocPC for AI agents
 
-This folder is the DocPC skill (Document Pipeline Compose). It builds assignment documents from source files.
+This folder is the DocPC skill (Document Pipeline Composer). It builds assignment documents from source files.
 
 - To use the skill, read `SKILL.md` and follow it. It is written for any agent that can read files and run commands.
 - If `local/setup.md` does not exist, follow `SETUP.md` first. It is the first-run setup (clean slate or university).

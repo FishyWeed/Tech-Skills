@@ -1,9 +1,9 @@
 ---
 name: docpc
-description: Document Pipeline Compose (DocPC). Builds graded assignment documents (proposals, reports, meeting minutes and progress sheets, filled forms) from source files - text scripts, draw.io diagrams, Word assembly with the lecturer's cover, and checks. Use when the user asks to write, build or rebuild assignment documentation, or types /docpc.
+description: Document Pipeline Composer (DocPC). Builds graded assignment documents (proposals, reports, meeting minutes and progress sheets, filled forms) from source files - text scripts, draw.io diagrams, Word assembly with the lecturer's cover, and checks. Use when the user asks to write, build or rebuild assignment documentation, or types /docpc.
 ---
 
-# Document Pipeline Compose (DocPC)
+# Document Pipeline Composer (DocPC)
 
 DocPC builds a document from source files: the text comes from a script, the diagrams are draw.io files, Microsoft Word
 adds the cover, the figures and the contents lists, and a check step looks at the result. The documents can be rebuilt at any time.

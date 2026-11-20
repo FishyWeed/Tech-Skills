@@ -1,4 +1,4 @@
-# DocPC: Document Pipeline Compose
+# DocPC: Document Pipeline Composer
 
 DocPC is an AI skill that builds assignment documents from source files. It writes proposals, reports, meeting minutes
 and progress sheets, and fills forms such as a workload matrix. The text comes from a script, the diagrams are draw.io

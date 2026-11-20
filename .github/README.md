@@ -20,7 +20,7 @@ its `SETUP.md` give the exact place.
 
 ---
 
-## DocPC (Document Pipeline Compose)
+## DocPC (Document Pipeline Composer)
 
 DocPC builds graded assignment documents from source files. The text comes from a script, the diagrams are draw.io
 files, Microsoft Word adds the lecturer's cover, the figures and the contents lists, and a check step looks at every
