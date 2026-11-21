@@ -5,7 +5,7 @@ plain files. One Python script (`engine/ctx.py`: Python 3, tested on 3.14, stand
 LLM calls) reads and writes it. Any model that can run a shell command can use it.
 
 **If you are a model: this file holds every rule you need.** The other folders hold details for one step each.
-People who install the skill: read [SETUP.md](SETUP.md).
+People: read [About CTX-PLINE](#about-ctx-pline-for-people) at the end of this file, then [SETUP.md](SETUP.md).
 
 ## Rules
 
@@ -91,3 +91,98 @@ CTX-PLINE/
   reference/     storage, compression, ranking and measured token costs
   tests/         offline unit tests: python -m unittest discover CTX-PLINE/tests
 ```
+
+## About CTX-PLINE (for people)
+
+This part is for people who want to know what the skill does. A model does not need it: the rules above are complete.
+
+CTX-PLINE gives a software project a memory that lasts across sessions, models and tools. A new session starts with
+what earlier sessions decided and learned. You do not explain the project again, and the model does not search the
+code again to find old decisions. The memory lives in the project as plain files, so it travels with the code in git.
+
+### What it keeps
+
+| Kind | ID | Example |
+| --- | --- | --- |
+| Decision | `D-1` | A choice for the project, with the reason |
+| Fact | `F-1` | Something that a session checked |
+| Task | `T-1` | Open work |
+| Issue | `I-1` | A known problem |
+| Session | `s0001` | A short summary of one session |
+
+Each session adds one short entry of tagged lines (less than 4,000 characters). The script gives each new item a
+stable ID. A later entry can close an item or replace a fact:
+
+```markdown
+Summary: Moved the deploy to Vercel.
+
+D: Vercel is the deploy target, because the team deploys only from main
+F: .npmrc has engine-strict=true, so installs fail on Node older than 22.17
+T: Add the custom domain
+X: T-4 done
+F~2: The API port is 8081
+```
+
+### How it works
+
+1. **Save.** Near the end of a session, the model writes the entry and runs `save`. The script checks the entry and
+   writes one session file.
+2. **Compile.** The script, with no model and no tokens, numbers the new items and compresses old sessions. The 2
+   newest sessions stay in full, sessions 3 to 5 back keep only their main lines, and older session files are
+   deleted. Every item stays in `ledger.json`, and an open item is never dropped.
+3. **Start.** `load --slim` prints the open tasks and issues in full, the 30 newest decisions and facts as one line
+   each, and the last two session summaries.
+4. **Recall.** Before each task, `recall` prints only the open decisions and facts that match the task, at most 6.
+   It ignores chat words, so a prompt such as "thanks, looks good" adds nothing.
+5. **Look up.** `find <words>` searches every item ever recorded, open or closed. `show D-12` prints one item in full.
+6. **End.** If a session ends without a save, the end hook writes a rough entry from the transcript. The next save
+   replaces it.
+
+With hooks, the tool runs steps 3, 4 and 6 for the model. You only ask the model to save near the end of a session
+(in Claude Code: `/save`).
+
+### What it costs
+
+- In real Claude Code work sessions, the memory text was 0.1% to 0.9% of the session's token cost.
+- In a small paid test on a web-app project (3 questions, 2 runs each), each question cost 29% less with the memory
+  than without it. Only the runs with the memory answered one of the questions correctly.
+- All file work (numbering, compression, search) runs in Python and uses no tokens.
+
+These are small tests, so your results can be different. The methods and numbers are in
+[reference/internals.md](reference/internals.md).
+
+### Supported tools
+
+| Tool | Setup command | What it adds | Tested |
+| --- | --- | --- | --- |
+| Claude Code | `init --claude` | Start, recall and end hooks, and a `/save` command | Yes, in daily use |
+| Gemini CLI | `init --hooks gemini` | Start, recall and end hooks | Not yet inside Gemini CLI |
+| OpenAI Codex | `init --instructions AGENTS.md` | A rule block in `AGENTS.md`; you add the hooks by hand | Not yet inside Codex |
+| Any other tool (Cursor, Windsurf, local models) | `init --instructions AGENTS.md` (or the tool's rule file) | A rule block that tells the model the steps | Works wherever the model can run shell commands |
+
+### What you need
+
+- Python 3 (tested on 3.14). The script uses the standard library only: no packages, no network and no model calls.
+- A model or tool that can run shell commands. Hooks are optional.
+
+### Install
+
+1. Copy this folder to where your tool finds skills, and name the copy `ctx-pline` (the `name` in `SKILL.md`). For
+   Claude Code, use `~/.claude/skills/ctx-pline/` for all projects, or `.claude/skills/ctx-pline/` for one project.
+2. From the root folder of your project, run the setup command for your tool, for example:
+
+   ```bash
+   python ~/.claude/skills/ctx-pline/engine/ctx.py init --claude
+   ```
+
+3. Check the memory: `python .claude/context/ctx.py status` (use the folder that `init` printed).
+4. Commit the memory folder (for example `.ctx/` or `.claude/context/`) with your project.
+
+If `init` finds a settings file that exists, it does not change it and prints `FLAG`. Run the command again with
+`--merge` to add the hooks to that file. [SETUP.md](SETUP.md) has every step, also to update and remove the skill.
+
+### Privacy
+
+- The memory stays in your project folder. The script sends nothing over the network.
+- An automatic entry from the end hook holds the first 160 characters of each of your prompts. Read the memory folder
+  before you push it to a public repository.
