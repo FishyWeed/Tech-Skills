@@ -75,6 +75,12 @@ A higher `RECALL_MIN` still does not separate good and bad items: 0.3 gave the b
 item that has only one of the topic words. On a second project memory (132 items), "run the tests and commit" no
 longer recalls a fact about the test results.
 
+A fix was tested on the same 20 prompts (2026-11-21): also let in an item that matches one topic word, if few items
+have that word (1, 2, 3 or 5 items), always or only when recall found fewer than 3 items. The best F1 went from 0.50
+to 0.51, but every variant printed items for an off-topic prompt again: "write a short poem about rain" got a decision
+about a "code rain" hero look. Rule 3 stays, because `recall` runs on every prompt and noise costs more than a missed
+item, which `find` can still reach.
+
 A cross-encoder ranker (gte-reranker-modernbert-base) was also tested on the 20 built-in candidates of each prompt.
 It ordered items a little better, but it took about 4 seconds for each prompt, and its scores did not separate
 either ("thanks, that looks good now" got 0.72). It also needs a large local install, so `recall` does not use it.

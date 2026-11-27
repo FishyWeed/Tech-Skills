@@ -11,7 +11,7 @@ Storage locations discovered automatically (walking up to repo root):
 Commands:
   load     Compile and print context: full, --focus "<query>", --slim, --index, or --since <N>
   show     Inspect specific item IDs (D-1, F-2..F-5) or sessions (s0014) without loading the digest
-  find     Search open & closed items across all history (exact -> ranker -> built-in IDF/BM25 ranker)
+  find     Search open & closed items across all history (exact -> CTX_RANKER command -> built-in IDF ranker)
   next     Show next session number, live items (token-lean on big projects), and entry format
   save     Record a session entry (--text "...", --file <path>, or stdin); supports X: A, B and F~1: updates
   status   Memory stats, token/char budget, and duplicate/stale item health check
@@ -19,6 +19,7 @@ Commands:
   init     Initialize memory (--agents, --claude, --hooks claude,gemini, --instructions AGENTS.md, --merge)
   recall   Prompt hook: print the open D/F items that match the prompt (nothing when none match well)
   autosave SessionEnd fallback from transcript (Claude Code, Gemini CLI, Codex, or generic JSON/JSONL)
+  should-offer / offer / decline   For launchers: offer memory once per project; remember "never"
 """
 import argparse, difflib, json, math, os, re, shlex, shutil, subprocess, sys
 from datetime import date, datetime, timezone
@@ -113,11 +114,6 @@ def find_root(start=None, explicit=None):
         if (cur / rel).is_dir():
             return cur / rel
     return cur / ".ctx"
-
-
-def root_dir(explicit_dir=None):
-    """Compatibility alias for find_root."""
-    return find_root(explicit=explicit_dir)
 
 
 def project_of(root):
@@ -1143,18 +1139,20 @@ def main(argv=None):
 
     ap = argparse.ArgumentParser(prog="ctx", description="CTX-PLINE (Context Pipeline): token-lean project memory.")
     ap.add_argument("cmd", choices=[
-        "init", "load", "read", "show", "next", "save", "find", "status", "compile", "recall",
+        "init", "load", "show", "next", "save", "find", "status", "compile", "recall",
         "autosave", "offer", "should-offer", "decline",
     ])
-    ap.add_argument("words", nargs="*", help="find/show/load --focus: query words or item IDs")
+    ap.add_argument("words", nargs="*", help="find/show/recall/load --focus: query words or item IDs")
     ap.add_argument("--dir", help="memory folder (default: nearest .ctx, .context, .agents/context, or .claude/context)")
     ap.add_argument("--text", "-t", help="save: session entry text (supports literal \\n)")
     ap.add_argument("--file", "-f", help="save: read session entry from file")
     ap.add_argument("--focus", nargs="*", help="load/next: filter D/F items to those matching these words")
     ap.add_argument("--mode", choices=["full", "slim", "index", "delta"], default="full",
                     help="load: reading resolution (full, slim, index, delta)")
-    ap.add_argument("--slim", action="store_true", help="load: shorthand for --mode slim (~50%% fewer tokens)")
-    ap.add_argument("--index", action="store_true", help="load: shorthand for --mode index (~85%% fewer tokens)")
+    ap.add_argument("--slim", action="store_true",
+                    help="load: shorthand for --mode slim (about 80%% fewer tokens than the full digest)")
+    ap.add_argument("--index", action="store_true",
+                    help="load: shorthand for --mode index (about 95%% fewer tokens than the full digest)")
     ap.add_argument("--since", type=int, help="load: only show changes after session N")
     ap.add_argument("--all", dest="show_all", action="store_true", help="next: list all D/F items in full")
     ap.add_argument("--open", dest="open_only", action="store_true", help="find: only open items")
@@ -1163,7 +1161,7 @@ def main(argv=None):
     ap.add_argument("--top", type=int, help="find/recall: max ranked results (find 5, recall 6)")
     ap.add_argument("--min-score", type=float, default=RECALL_MIN, help="recall: lowest match score to show (0..1)")
     ap.add_argument("--hook", choices=["claude", "gemini", "codex", "generic"],
-                    help="load/autosave: hook output format")
+                    help="load/recall/autosave: hook output format")
     ap.add_argument("--transcript", help="autosave: transcript file path")
     ap.add_argument("--hooks", default="", help="init: comma list of agents to wire hooks for (claude,gemini)")
     ap.add_argument("--instructions", action="append", default=[],
@@ -1186,9 +1184,9 @@ def main(argv=None):
         sys.exit(init(project, a.merge, hooks, a.instructions, explicit_root, claude=a.claude, agents=a.agents))
 
     root = find_root(start, a.dir)
-    if a.cmd in ("load", "read"):
+    if a.cmd == "load":
         mode = "slim" if a.slim else ("index" if a.index else a.mode)
-        focus = (a.focus or []) + (a.words or []) if (a.focus is not None or a.cmd == "read") else None
+        focus = (a.focus or []) + (a.words or []) if a.focus is not None else None
         load(root, a.hook, mode=mode, focus=focus or None, since=a.since)
     elif a.cmd == "show":
         show(root, a.words)
