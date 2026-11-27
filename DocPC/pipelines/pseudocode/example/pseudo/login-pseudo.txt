@@ -1,0 +1,19 @@
+BEGIN
+    READ email, password
+    IF email = "" OR password = "" THEN
+        DISPLAY "Enter the email and the password"
+    ELSE
+        SET user = the account with this email
+        IF user exists AND password matches user.password THEN
+            SET attempts = 0
+            DISPLAY dashboard
+        ELSE
+            SET attempts = attempts + 1
+            IF attempts >= 3 THEN
+                DISPLAY "Account locked for 15 minutes"
+            ELSE
+                DISPLAY "Wrong email or password"
+            END IF
+        END IF
+    END IF
+END

@@ -1,0 +1,41 @@
+{
+  "_note": "Example only. Replace it with the screens of the document's own system. The element types are in the header of wireframe.js. Every screen and element must come from the design of the system (the brief, the user's notes or the app).",
+  "wf-login": {
+    "device": "desktop",
+    "title": "Login",
+    "rows": [
+      "header: System Name | Home, About, Login",
+      "space: 20",
+      "heading: Log in to your account",
+      "input: Email",
+      "input: Password",
+      ["checkbox: Remember me", "link: Forgot your password?"],
+      "button: Log in | primary",
+      "space: 10",
+      "footer: Copyright notice"
+    ]
+  },
+  "wf-dashboard": {
+    "device": "desktop",
+    "title": "Dashboard",
+    "rows": [
+      "header: System Name | Dashboard, Reports, Log out",
+      "heading: Dashboard",
+      ["card: Summary 1", "card: Summary 2", "card: Summary 3"],
+      "table: ID, Name, Status, Date | 4",
+      ["button: Add record | primary", "button: Export"]
+    ]
+  },
+  "wf-mobile-home": {
+    "device": "mobile",
+    "title": "Home",
+    "rows": [
+      "image: Banner | 120",
+      "heading: Welcome",
+      "lines: 3",
+      "select: Category",
+      "list: Item A, Item B, Item C",
+      "button: Continue | primary"
+    ]
+  }
+}

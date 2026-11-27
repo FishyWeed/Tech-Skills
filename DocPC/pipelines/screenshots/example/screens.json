@@ -1,0 +1,11 @@
+{
+  "_help": "Pages of the built app to capture with the screenshots pipeline. Each screen becomes figures/<name>.png at the exact size, for figure() in content.js. Use the address of the running app, for example a local development server. width and height may also be set for one screen.",
+  "width": 1366,
+  "height": 768,
+  "wait": 3000,
+  "_wait": "Milliseconds that the page may load before the screenshot.",
+  "screens": [
+    { "name": "screen-home", "url": "http://localhost:3000/" },
+    { "name": "screen-home-mobile", "url": "http://localhost:3000/", "width": 390, "height": 844 }
+  ]
+}

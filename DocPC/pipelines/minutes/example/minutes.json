@@ -3,6 +3,8 @@
   "project": "Team name / Project name",
   "members": ["Full name of the student"],
   "output": "MINUTES-AND-PROGRESS-REPORT",
+  "images": false,
+  "_images": "true: the pipeline also renders each page to figures/<output>-<page>.png, for figure() in content.js.",
   "pages": [
     {
       "type": "minutes", "n": 1, "week": 1, "weekDate": "Sunday 3 January 2027",

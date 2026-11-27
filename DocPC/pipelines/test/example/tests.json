@@ -1,0 +1,40 @@
+{
+  "_help": "Test cases. tests.js turns them into report tables for content.js (the helper tests), and uat.js turns them into the UAT pack. Replace the example cases. Write only real results: keep actual, status, tester and date empty until a real test run fills them in. status is Pass, Fail or Blocked.",
+  "system": "System Name",
+  "output": "UAT-PACK",
+  "uat": true,
+  "_uat": "true: the test pipeline builds the UAT pack as Outputs/<output>.docx and .pdf.",
+  "reports": [],
+  "_reports": "Reports of the project's own automated tests (JUnit XML or Jest JSON), relative to Source/, for example \"../Inputs/report.xml\". The test pipeline turns them into tests-auto.json.",
+  "roles": ["Customer", "Administrator"],
+  "cases": [
+    {
+      "id": "TC-01", "module": "Login", "role": "Customer", "title": "Log in with a valid account",
+      "pre": "A customer account exists.",
+      "steps": ["Open the login page.", "Enter the email and the password of the account.", "Select Log in."],
+      "data": "The email and password of the test account", "expected": "The dashboard opens.",
+      "actual": "", "status": "", "tester": "", "date": ""
+    },
+    {
+      "id": "TC-02", "module": "Login", "role": "Customer", "title": "Log in with a wrong password",
+      "pre": "A customer account exists.",
+      "steps": ["Open the login page.", "Enter the email of the account and a wrong password.", "Select Log in."],
+      "data": "A wrong password", "expected": "The page shows \"Wrong email or password\" and the dashboard does not open.",
+      "actual": "", "status": "", "tester": "", "date": ""
+    },
+    {
+      "id": "TC-03", "module": "Records", "role": "Administrator", "title": "Add a record",
+      "pre": "The administrator is logged in.",
+      "steps": ["Open the dashboard.", "Select Add record.", "Fill in the form and select Save."],
+      "data": "A new record", "expected": "The new record shows in the table.",
+      "actual": "", "status": "", "tester": "", "date": ""
+    }
+  ],
+  "feedback": [
+    { "q": "The system is easy to use.", "type": "scale" },
+    { "q": "The pages load fast enough.", "type": "scale" },
+    { "q": "I can finish my tasks without help.", "type": "scale" },
+    { "q": "What should be improved?", "type": "text" }
+  ],
+  "_feedback": "A scale question gets the boxes 1 (strongly disagree) to 5 (strongly agree). A text question gets an empty box."
+}

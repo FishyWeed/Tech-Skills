@@ -1,43 +1,31 @@
-// Draws the generated figures as simple SVG files in gen/. Then `node svg2drawio.js gen/*.svg` makes an editable
-// drawio/<name>.drawio once (an existing file is kept), and `node drawio-svg.js` exports figures/<name>.svg for the report.
-// The Gantt chart reads plan.json. Add more diagram functions with the helpers box, line, plain and text.
+// Draws the charts of charts.json as simple SVG files in gen/. The charts pipeline then turns each one into an
+// editable drawio/<name>.drawio (once; an existing file is kept) and exports figures/<name>.svg for the report.
+// Usage by hand: node charts.js [name ...]   (in Source/)
+//
+// charts.json holds one entry for each chart. "type" is "gantt" or "hierarchy":
+//   gantt:     {}                                        the project plan in plan.json, one row for each task
+//   hierarchy: { root: name, modules: [[module, [function]]] }   a root box, its modules and their functions
+// To add a chart type, add a function that returns SVG (helpers in lib/svg.js) and put it in TYPES.
 const fs = require('fs');
-const plan = JSON.parse(fs.readFileSync(__dirname + '/plan.json', 'utf8'));
+const { QUIET, svg, text, box, line, plain } = require('../../lib/svg.js');
+const { src, readJson } = require('../../lib/paths.js');
+const { MONTHS, readPlan } = require('../../lib/plan.js');
 
-const INK = '#1a1a1a', QUIET = '#555555', EDGE = '#6b6b6b', ACCENT = '#6b6b6b', DONE = '#bdbdbd', GRID = '#dddddd', FONT = 'Arial';
-const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-const svg = (w, h, body) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-family="${FONT}">
-<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${EDGE}"/></marker></defs>
-<rect width="${w}" height="${h}" fill="#ffffff"/>${body}</svg>`;
-const text = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.size || 13}" font-weight="${o.bold ? 700 : 400}" fill="${o.fill || INK}" text-anchor="${o.anchor || 'middle'}">${esc(s)}</text>`;
-// A box with one or more centred lines (split on \n).
-const box = (cx, cy, w, h, label, o = {}) => {
-  const lines = label.split('\n'), size = o.size || 13, lh = size + 3;
-  const y0 = cy - ((lines.length - 1) * lh) / 2 + size / 3;
-  return `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="6" fill="#ffffff" stroke="${EDGE}" stroke-width="1.2"/>` +
-    lines.map((l, i) => text(cx, y0 + i * lh, l, { size, bold: o.bold && i === 0 })).join('');
-};
-const line = d => `<path d="${d}" fill="none" stroke="${EDGE}" stroke-width="1.3" marker-end="url(#a)"/>`;
-const plain = d => `<path d="${d}" fill="none" stroke="${EDGE}" stroke-width="1.3"/>`;
+const ACCENT = '#6b6b6b', DONE = '#bdbdbd', GRID = '#dddddd';
 
 // Gantt chart from plan.json: one row for each task, a dark bar for each group row. The weeks fit the plan dates.
 function gantt() {
   const day = d => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 864e5;
-  const rows = plan.map(r => {
-    if (!r.group) return r;
-    const kids = plan.filter(k => !k.group && k.id.startsWith(r.id.replace(/\.0$/, '.')));
-    return { ...r, s: kids.map(k => k.s).sort()[0], e: kids.map(k => k.e).sort().at(-1) };
-  });
+  const rows = readPlan();
   const first = Math.min(...rows.map(r => day(r.s))), last = Math.max(...rows.map(r => day(r.e)));
   const t0 = first - ((new Date(first * 864e5).getUTCDay() + 6) % 7); // the Monday of the first week
   const weeks = Math.ceil((last - t0 + 1) / 7), x0 = 250, span = 490, px = span / (weeks * 7), rowH = 24, y0 = 74;
-  const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const out = [text(24, 50, 'Activity', { anchor: 'start', bold: true, size: 12 })];
   const every = Math.ceil(weeks / 12); // at most 12 date labels
   for (let k = 0; k <= weeks; k++) {
     const x = x0 + k * 7 * px, dt = new Date((t0 + k * 7) * 864e5);
     out.push(`<line x1="${x}" x2="${x}" y1="${y0 - 14}" y2="${y0 + rows.length * rowH}" stroke="${GRID}"/>`);
-    if (k < weeks && k % every === 0) out.push(text(x + 3.5 * px, 50, `${dt.getUTCDate()} ${mon[dt.getUTCMonth()]}`, { size: 10, fill: QUIET }));
+    if (k < weeks && k % every === 0) out.push(text(x + 3.5 * px, 50, `${dt.getUTCDate()} ${MONTHS[dt.getUTCMonth()]}`, { size: 10, fill: QUIET }));
   }
   rows.forEach((r, i) => {
     const y = y0 + i * rowH, xs = x0 + (day(r.s) - t0) * px, xe = x0 + (day(r.e) - t0 + 1) * px;
@@ -52,14 +40,9 @@ function gantt() {
   return svg(760, yl + 14, out.join(''));
 }
 
-// Hierarchy chart: a root box, its modules and the functions of each module. Change the spec for the document.
-const HIERARCHY = ['System Name', [
-  ['Module 1', ['Function A', 'Function B']],
-  ['Module 2', ['Function C', 'Function D', 'Function E']],
-  ['Module 3', ['Function F']],
-]];
-function hierarchy() {
-  const [root, mods] = HIERARCHY, W = 760, cw = Math.min(150, (W - 12) / mods.length - 6), gap = 6;
+// Hierarchy chart: a root box, its modules and the functions of each module.
+function hierarchy({ root, modules: mods }) {
+  const W = 760, cw = Math.min(150, (W - 12) / mods.length - 6), gap = 6;
   const x0 = (W - (mods.length * cw + (mods.length - 1) * gap)) / 2 + cw / 2, rootY = 40, modY = 140, out = [];
   const most = Math.max(...mods.map(m => m[1].length));
   out.push(box(W / 2, rootY, 400, 50, root, { bold: true, size: 14 }));
@@ -77,6 +60,21 @@ function hierarchy() {
   return svg(W, modY + 78 + most * 56, out.join(''));
 }
 
-fs.mkdirSync(__dirname + '/gen', { recursive: true });
-for (const [n, f] of Object.entries({ gantt, hierarchy })) fs.writeFileSync(`${__dirname}/gen/${n}.svg`, f());
-console.log('gen/*.svg written');
+const TYPES = { gantt, hierarchy };
+
+// Writes gen/<name>.svg for each chart and returns the names.
+function build(only = []) {
+  const spec = readJson('charts.json'), names = [];
+  fs.mkdirSync(src('gen'), { recursive: true });
+  for (const [name, c] of Object.entries(spec)) {
+    if (name.startsWith('_') || (only.length && !only.includes(name))) continue;
+    if (!TYPES[c.type]) throw new Error(`${name}: type must be ${Object.keys(TYPES).join(' or ')}`);
+    fs.writeFileSync(src('gen', `${name}.svg`), TYPES[c.type](c));
+    console.log(`gen/${name}.svg written`);
+    names.push(name);
+  }
+  return names;
+}
+
+module.exports = { build };
+if (require.main === module) build(process.argv.slice(2));

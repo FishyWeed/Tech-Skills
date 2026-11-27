@@ -25,6 +25,8 @@ In this file, `<skill>` is the folder that holds this file.
 
    - Find the operating system, and whether Word and Excel are installed.
    - Check Node.js 18 or later (`node --version`), and Microsoft Edge (or Chrome or Chromium in the `EDGE` variable).
+   - If `<skill>/node_modules/` does not exist, run `npm install` in `<skill>`. The pipelines need its one package (`docx`).
+   - Run `node <skill>/run.js` to see that the pipelines load.
    - Tell the user what is missing. Continue the setup: the missing parts only stop the steps that need them.
 
 2. **Ask which setup the user wants.** Give two choices:

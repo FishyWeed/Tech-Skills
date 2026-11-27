@@ -1,9 +1,10 @@
 // Draws the design diagrams from design.json straight into editable draw.io files: context diagram, DFDs and ERD.
 // Each shape is a native draw.io shape (process circle, entity box, data store, ERD table) and each line is attached
 // to its shapes, so the diagram stays easy to edit in draw.io. Every arrow head ends exactly on the border of its shape.
-// Usage: node design.js [name ...] [--reset]   (no names = every diagram in design.json)
+// The design pipeline runs it, then exports the figures and checks the line ends.
+// Usage by hand: node design.js [name ...] [--reset]   (in Source/; no names = every diagram in design.json)
 // A .drawio file is created only if it does not exist: once it exists, it is the source and the user may edit it.
-// CAUTION: --reset overwrites draw.io edits. Then run `node drawio-svg.js` to export figures/<name>.svg.
+// CAUTION: --reset overwrites draw.io edits.
 //
 // design.json holds one entry for each diagram. "type" is "context", "dfd" or "erd":
 //   context: { system, entities: [name], flows }                  the system is the process "0"
@@ -14,23 +15,23 @@
 //   erd:     Crow's Foot notation. { entities: [[name, column, row, [attribute]]], relations: [[entityA, verb, entityB, cardA, cardB]] }
 //            an attribute is "name", "PK name", "FK name" or "PK,FK name" (a type may follow: "usr_email VARCHAR(100)")
 //            a cardinality is "1", "0..1", "1..*" or "0..*" (the mark at that entity's end of the line)
-const fs = require('fs'), path = require('path');
-const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'design.json'), 'utf8'));
+const fs = require('fs');
+const { src, readJson } = require('../../lib/paths.js');
 
 let CELLS = [], NEXT = 2, SHAPES = [], LINES = [];
-const xa = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/\n/g, '&#xa;');
+const { escapeAttr } = require('../../lib/xml.js');
 const r1 = v => +v.toFixed(1);
 const BASE = 'html=0;fontFamily=Arial;fontColor=#1a1a1a;strokeColor=#333333;fillColor=#ffffff;';
 const LABEL = 'labelBackgroundColor=#ffffff;fontSize=10.5;';
 function vtx(x, y, w, h, value, style, parent = '1') {
   const id = 'c' + NEXT++;
-  CELLS.push([1, `<mxCell id="${id}" value="${xa(value)}" style="${BASE}${style}" vertex="1" parent="${parent}"><mxGeometry x="${r1(x)}" y="${r1(y)}" width="${r1(w)}" height="${r1(h)}" as="geometry"/></mxCell>`]);
+  CELLS.push([1, `<mxCell id="${id}" value="${escapeAttr(value)}" style="${BASE}${style}" vertex="1" parent="${parent}"><mxGeometry x="${r1(x)}" y="${r1(y)}" width="${r1(w)}" height="${r1(h)}" as="geometry"/></mxCell>`]);
   return id;
 }
 // A line under the shapes (drawn first). `at` is the label position from -1 (source end) to 1 (target end).
-function edg(src, tgt, o = {}) {
+function edg(fromId, toId, o = {}) {
   const pts = o.pts ? `<mxPoint x="${r1(o.pts[0][0])}" y="${r1(o.pts[0][1])}" as="sourcePoint"/><mxPoint x="${r1(o.pts[1][0])}" y="${r1(o.pts[1][1])}" as="targetPoint"/>` : '';
-  CELLS.push([0, `<mxCell id="c${NEXT++}" value="${xa(o.label || '')}" style="${BASE}${LABEL}${o.arrows || 'endArrow=block;endFill=1;endSize=6;'}rounded=0;${o.style || ''}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry x="${o.at ?? 0}" relative="1" as="geometry">${pts}</mxGeometry></mxCell>`]);
+  CELLS.push([0, `<mxCell id="c${NEXT++}" value="${escapeAttr(o.label || '')}" style="${BASE}${LABEL}${o.arrows || 'endArrow=block;endFill=1;endSize=6;'}rounded=0;${o.style || ''}" edge="1" parent="1" source="${fromId}" target="${toId}"><mxGeometry x="${o.at ?? 0}" relative="1" as="geometry">${pts}</mxGeometry></mxCell>`]);
 }
 const drawio = name => `<mxfile host="design.js"><diagram name="${name}"><mxGraphModel grid="0" page="0" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/>${CELLS.sort((a, b) => a[0] - b[0]).map(c => c[1]).join('')}</root></mxGraphModel></diagram></mxfile>`;
 
@@ -142,19 +143,33 @@ function erd(s) {
 }
 
 const draw = { context, dfd, erd };
-const reset = process.argv.includes('--reset'), only = process.argv.slice(2).filter(a => a !== '--reset');
-fs.mkdirSync(path.join(__dirname, 'drawio'), { recursive: true });
-for (const [name, s] of Object.entries(spec)) {
-  if (name.startsWith('_') || (only.length && !only.includes(name))) continue;
-  const file = path.join(__dirname, 'drawio', `${name}.drawio`);
-  if (fs.existsSync(file) && !reset) { console.log(`kept drawio/${name}.drawio`); continue; }
-  if (!draw[s.type]) throw new Error(`${name}: type must be context, dfd or erd`);
-  CELLS = []; NEXT = 2; SHAPES = []; LINES = []; draw[s.type](s);
-  // Warn when a line runs through a shape that is not one of its ends: the layout needs a y value or another grid place.
+
+// Warns when a line runs through a shape that is not one of its ends: the layout needs a y value or another grid place.
+function warnCrossings(name) {
   for (const [label, a, b, A, B] of LINES) {
-    const n = Math.ceil(Math.hypot(B[0] - A[0], B[1] - A[1]) / 2), on = sh => Array.from({ length: n + 1 }, (_, i) => i / n).some(t => sh.inside(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t));
+    const n = Math.ceil(Math.hypot(B[0] - A[0], B[1] - A[1]) / 2);
+    const on = sh => Array.from({ length: n + 1 }, (_, i) => i / n).some(t => sh.inside(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t));
     for (const sh of SHAPES.filter(sh => sh !== a && sh !== b && on(sh)))
       console.log(`WARNING ${name}: the line "${String(label).replace(/\n/g, ' ')}" (${a.name} - ${b.name}) runs through ${sh.name}. Move a shape (y, column or row).`);
   }
-  fs.writeFileSync(file, drawio(name)); console.log(`created drawio/${name}.drawio`);
 }
+
+// Writes drawio/<name>.drawio for each diagram that has no file yet (all with reset) and returns every diagram name.
+function build(only = [], reset = false) {
+  const spec = readJson('design.json'), names = [];
+  fs.mkdirSync(src('drawio'), { recursive: true });
+  for (const [name, s] of Object.entries(spec)) {
+    if (name.startsWith('_') || (only.length && !only.includes(name))) continue;
+    names.push(name);
+    const file = src('drawio', `${name}.drawio`);
+    if (fs.existsSync(file) && !reset) { console.log(`kept drawio/${name}.drawio`); continue; }
+    if (!draw[s.type]) throw new Error(`${name}: type must be context, dfd or erd`);
+    CELLS = []; NEXT = 2; SHAPES = []; LINES = []; draw[s.type](s);
+    warnCrossings(name);
+    fs.writeFileSync(file, drawio(name)); console.log(`created drawio/${name}.drawio`);
+  }
+  return names;
+}
+
+module.exports = { build };
+if (require.main === module) build(process.argv.slice(2).filter(a => a !== '--reset'), process.argv.includes('--reset'));

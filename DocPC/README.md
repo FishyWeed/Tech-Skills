@@ -16,11 +16,17 @@ everything comes from source files, you can change one part and rebuild the whol
 | Proposals and reports | The text comes from a script. Word adds the cover from the lecturer's template, the figures, a table of contents and lists of figures and tables. The figure and table numbers in the text stay correct when you add or move a figure. |
 | Design diagrams | A context diagram, DFDs and a Crow's Foot ERD, written as native draw.io files from one JSON file. By default, it draws only the context diagram, the DFD Level 0 and the ERD. |
 | Other diagrams | A Gantt chart from the project plan, hierarchy charts and your own simple drawings, turned into draw.io files. |
+| Wireframes | Low-fidelity screens (header, navigation, inputs, buttons, images, tables, lists, cards) in a desktop or mobile frame, from one JSON file, as editable draw.io files. |
+| Pseudocode | A text file for each algorithm, shown in a grey box with the keywords in bold and a figure caption. |
+| Testing | Test cases, test results and a summary by module from one JSON file. The results of the project's own automated tests (JUnit XML or Jest JSON). A UAT pack: a test script for each user role and a feedback form, for testers to fill in. |
 | Meeting minutes and progress sheets | Word files from one JSON file, with one page for each meeting. |
 | Excel forms | The cells of a template filled in, for example a workload matrix, with your signature if you allow it. |
-| Evidence | Screenshots and test results from a built app, if the project has one. |
+| Evidence | Screenshots of the pages of a running app at the exact size, from one JSON file, if the project has an app. |
 
 You can edit every diagram in draw.io (desktop or app.diagrams.net). The next build uses your edits.
+
+Each output is its own pipeline. One command runs all of its steps and ends with its check, for example
+`node run.js wireframes` or `node run.js assemble`. `node run.js` lists the pipelines.
 
 ## How it works
 
@@ -36,17 +42,18 @@ You can edit every diagram in draw.io (desktop or app.diagrams.net). The next bu
 2. **Folders.** For each document, the skill asks where to write it: in a new folder, or in the folder the chat runs
    in. It makes three folders there:
    - `Inputs/`: the brief, the rubric, the lecturer's template, samples and your notes. The skill only reads them.
-   - `Source/`: the working files (text script, project plan, diagrams, figures). You can rebuild everything from them.
+   - `Source/`: the document's own data (content, project plan, diagram specs, draw.io files, figures). The code stays
+     in the skill, so a fix to the skill reaches every document. You can rebuild everything from `Source/`.
    - `Outputs/`: only the finished `.docx`, `.pdf` and `.xlsx` files to hand in.
 3. **Your details.** The skill reads them from the place that you chose in the setup: a profile folder (`about-me.md`),
    its own `local/me.md` file, or the chat.
 4. **Plan.** The skill reads `Inputs/` and makes a project plan and a section list in the order of the lecturer's
    template. It shows them to you before it writes.
-5. **Build.** It runs only the steps that the document needs: text, diagrams, Word assembly, forms, evidence from a
-   built app and project notes.
-6. **Check.** It reports the page count, the placeholders left, broken Word fields, notes in brackets and captions
-   cut from their pictures. It checks that every arrow head and line end in a diagram touches its shape. Then it
-   renders the pages to images and looks at them.
+5. **Build.** It runs only the pipelines that the document needs: text, pseudocode, diagrams, charts, wireframes,
+   screenshots, testing, forms and the Word assembly.
+6. **Check.** It reports the page count, the placeholders left, broken Word fields, notes in brackets and captions on
+   another page than their figure or table. It checks that every arrow head and line end in a diagram touches its
+   shape. Then it renders the pages to images and looks at them.
 
 ## Rules the skill keeps
 
@@ -63,8 +70,9 @@ You can edit every diagram in draw.io (desktop or app.diagrams.net). The next bu
 ## Install
 
 - **Claude Code:** DocPC is one folder of a repository with several skills. Clone or download the repository, then copy
-  its `DocPC` folder into your skills folder (`~/.claude/skills/docpc`, or `.claude/skills/docpc` in a project). Then
-  type `/docpc`, or ask Claude to write your assignment documentation. The first run starts the setup.
+  its `DocPC` folder into your skills folder (`~/.claude/skills/docpc`, or `.claude/skills/docpc` in a project). Run
+  `npm install` once in that folder. Then type `/docpc`, or ask Claude to write your assignment documentation. The
+  first run starts the setup.
 - **Other AI agents** (Codex, Gemini CLI, Cursor and others): tell the agent to read `AGENTS.md` or `SKILL.md` in this
   folder. The instructions are plain Markdown, and every step is a normal Node.js or PowerShell script.
 
@@ -82,17 +90,15 @@ forms and the PDF checks are PowerShell scripts that control Word and Excel thro
 
 Some steps work anywhere, and some need Windows with Word or Excel:
 
-| Step | Works without Word or Excel, and on macOS or Linux? |
+| Pipeline | Works without Word or Excel, and on macOS or Linux? |
 | --- | --- |
-| Text (`body.js` writes `body.docx`) | Yes (Node.js). |
-| Minutes and progress sheets (`minutes.js`) | Yes (Node.js writes the `.docx`). |
-| Diagrams (`design.js`, `diagrams.js`, `svg2drawio.js`) | Yes (Node.js). |
-| Diagram export (`drawio-svg.js`) | Should work with Google Chrome or Chromium instead of Edge: set the `EDGE` environment variable to its path. Not tested on macOS or Linux yet. |
-| Line-end check (`checks/touch.js`) | Yes (Node.js). |
-| Assembly (`assemble.ps1`): cover, figures, contents lists, PDF | No. It needs Word on Windows. |
-| PDF export (`pdf.ps1`) | No. It needs Word on Windows. |
-| Excel forms (`xlsx-fill.ps1`) | No. It needs Excel on Windows. |
-| PDF checks (`check.ps1`, `render.ps1`) | No. They use the Windows PDF engine. |
+| `text` (writes `body.docx`), `pseudocode` | Yes (Node.js). |
+| `design`, `charts`, `wireframes` | Yes (Node.js). The export should work with Google Chrome or Chromium instead of Edge: set the `EDGE` environment variable to its path. Not tested on macOS or Linux yet. |
+| `minutes`, `test` | The `.docx` files: yes (Node.js). Their PDF and its check: no. |
+| `screenshots` | No. It uses Edge and .NET on Windows. |
+| `assemble`: cover, figures, contents lists, PDF | No. It needs Word on Windows. |
+| `excel` | No. It needs Excel on Windows. |
+| `check` | No. It uses the Windows PDF engine. |
 
 If you cannot use Word, do these steps by hand:
 
@@ -111,8 +117,9 @@ Fill the Excel forms by hand. Support for LibreOffice on macOS and Linux is a fu
 | `AGENTS.md` | A pointer to `SKILL.md` for other AI agents. |
 | `SETUP.md` | The first-run setup for the AI: clean slate or university. |
 | `local/` | Made by the setup, and ignored by git: `setup.md` (your choices), `me.md` (your details, if you ask) and `assets/` (your signature and logo; no project files). The skill uses the assets only when you ask. |
-| `templates/` | The starting files that the skill copies into `Source/`: `body.js` (text), `doc.json` (settings and cover values), `plan.json` (project plan), `design.js` and `design.json` (context diagram, DFDs and a Crow's Foot ERD as draw.io files; by default only the context diagram, DFD Level 0 and the ERD), `diagrams.js`, `svg2drawio.js`, `drawio-svg.js` (other diagrams and the export), `assemble.ps1` (Word assembly), `pdf.ps1`, `minutes.js` and `minutes.json` (minutes and progress sheets), `xlsx-fill.ps1` and `xlsx.json` (Excel forms). |
-| `checks/` | `check.ps1` (page count, orientation, placeholders, broken fields, notes, captions), `render.ps1` (PDF pages to PNG), `crop.ps1` (trim white edges), `touch.js` (every arrow head and line end in a diagram touches its shape). |
+| `run.js`, `package.json` | The runner of the pipelines, and the one package that they need (`docx`). |
+| `pipelines/` | One folder for each pipeline: its scripts, its `pipeline.js` (the steps in order) and `example/` (the data files that `run.js init` copies into `Source/`). The pipelines are `text`, `pseudocode`, `design`, `charts`, `wireframes`, `screenshots`, `test`, `minutes`, `excel`, `assemble` and `check`. |
+| `lib/` | The parts that the pipelines share: paths, SVG drawing, SVG to draw.io, the draw.io export, the project plan, XML text, Word form parts, the Word PDF export and the Windows PDF engine. |
 
 ## License
 

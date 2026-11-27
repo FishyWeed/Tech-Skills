@@ -1,10 +1,11 @@
-# Fills an Excel form (for example a workload matrix) from xlsx.json, with Microsoft Excel, and saves a copy in ..\Outputs.
-# The template opens read-only and does not change. Usage: powershell -NoProfile -ExecutionPolicy Bypass -File xlsx-fill.ps1 [xlsx.json]
+# Fills an Excel form (for example a workload matrix) from xlsx.json, with Microsoft Excel, and saves a copy in Outputs\.
+# The template opens read-only and does not change. Relative paths in xlsx.json are relative to the Source folder.
+# Usage: node <skill>/run.js excel, or by hand: powershell -NoProfile -ExecutionPolicy Bypass -File xlsx-fill.ps1 [-Source <Source folder>]
 # CAUTION: put a signature in only when the user allows it for this form.
-param([string]$Json = "$PSScriptRoot\xlsx.json")
+param([string]$Source = (Get-Location).Path)
 $ErrorActionPreference = 'Stop'
-$b = $PSScriptRoot
-$cfg = Get-Content $Json -Raw -Encoding UTF8 | ConvertFrom-Json
+$b = (Resolve-Path $Source).Path
+$cfg = Get-Content "$b\xlsx.json" -Raw -Encoding UTF8 | ConvertFrom-Json
 function Full($p) { if ([IO.Path]::IsPathRooted($p)) { $p } else { [IO.Path]::GetFullPath([IO.Path]::Combine($b, $p)) } }
 $tpl = Full $cfg.template
 # Paths for Office must be plain strings: a Join-Path result can make a save hang without an error.

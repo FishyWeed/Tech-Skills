@@ -1,0 +1,13 @@
+{
+  "_note": "Example only. Replace it with the document's own charts. The types are in the header of charts.js. The Gantt chart reads plan.json.",
+  "gantt": { "type": "gantt" },
+  "hierarchy": {
+    "type": "hierarchy",
+    "root": "System Name",
+    "modules": [
+      ["Module 1", ["Function A", "Function B"]],
+      ["Module 2", ["Function C", "Function D", "Function E"]],
+      ["Module 3", ["Function F"]]
+    ]
+  }
+}
