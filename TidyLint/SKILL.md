@@ -93,6 +93,9 @@ again into `<tmp>/after/`, then compare it with `<tmp>/before/`.
 5. Do not disable a rule to make an error go away. If a rule is wrong for the project, ask the user.
 6. Measure the scope again: files, lines and the longest function. Use these numbers as "before" for passes 2 to 5. A
    formatter can add many lines to dense code, and these lines are not part of the refactor.
+7. If the line count went up, tell the user why in the report: the formatter put each statement, condition and
+   argument of dense code on its own line, with standard indentation. The extra lines add no logic. They make the code
+   readable and make each later diff clear.
 
 ### Pass 2: Merge duplicates into reusable modules
 

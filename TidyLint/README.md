@@ -86,8 +86,12 @@ and ESLint, or Ruff) and adds them only after you approve.
 It also turns on the size rules of the linter as warnings, so that the linter lists the big blocks for pass 3. At the
 end, it removes them again, unless you want to keep them.
 
-A formatter can add many lines to dense code. So TidyLint measures the code again after pass 1, and uses these numbers
-as "before" for the other passes.
+After pass 1, the number of lines often goes up, sometimes a lot. This is not new code, and it is a good sign. Dense
+code puts many statements, conditions or arguments on one long line. The formatter puts each one on its own line, with
+standard indentation. The program does the same thing, but now a person can read it line by line, and a diff shows
+each change clearly.
+
+So TidyLint measures the code again after pass 1, and uses these numbers as "before" for the other passes.
 
 ### Pass 2: Reusable modules
 
@@ -276,7 +280,8 @@ TidyLint asks before each choice that is yours to make:
 ## The report
 
 At the end, TidyLint writes a report with the same layout every time. "Before" for passes 2 to 5 is the measurement
-after pass 1.
+after pass 1. If pass 1 adds lines, the report says why: the formatter split dense code into readable lines, and it
+added no logic.
 
 | Pass | Files changed | Lines before → after | Longest function before → after | Duplicates merged | Comments removed |
 | --- | --- | --- | --- | --- | --- |
